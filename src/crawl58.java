@@ -6,7 +6,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import java.util.List;
 
 /**
- * ÅÀ58Í¬³Ç
+ * çˆ¬58åŒåŸ
  */
 public class crawl58 {
     public static void main(String[] args){
@@ -20,27 +20,27 @@ public class crawl58 {
             HtmlPage classPage = (HtmlPage) webClient.getPage("http://wh.58.com/danche/?PGTID=14340278354750.16343053430318832&ClickID=1");
             HtmlElement classDiv = (HtmlElement) classPage.getHtmlElementById("infolist");
             List<HtmlElement> classTable = classDiv.getElementsByAttribute("table", "class", "tbimg");
-            System.out.println("¹²ÓĞclassÎªtbimgµÄtableÊıÁ¿£º " + classTable.size());//1
+            System.out.println("å…±æœ‰classä¸ºtbimgçš„tableæ•°é‡ï¼š " + classTable.size());//1
 
             List<HtmlElement> trContent = classTable.get(0).getHtmlElementsByTagName("tr");
-            System.out.println("¹²ÓĞÎªÄ¦ÍĞ³µÁĞ±íµÄÊıÁ¿£º " + trContent.size());//50
+            System.out.println("å…±æœ‰ä¸ºæ‘©æ‰˜è½¦åˆ—è¡¨çš„æ•°é‡ï¼š " + trContent.size());//50
 
-            List<HtmlElement> tdContent = trContent.get(0).getHtmlElementsByTagName("td");// µÚÒ»¸öÁĞ±í
-            System.out.println("Ò»¸öÄ¦ÍĞ³µÁĞ±ítdµÄÊıÁ¿£º " + tdContent.size());//50
+            List<HtmlElement> tdContent = trContent.get(0).getHtmlElementsByTagName("td");// ç¬¬ä¸€ä¸ªåˆ—è¡¨
+            System.out.println("ä¸€ä¸ªæ‘©æ‰˜è½¦åˆ—è¡¨tdçš„æ•°é‡ï¼š " + tdContent.size());//50
 
             List<HtmlElement> oneListTagA = tdContent.get(0).getHtmlElementsByTagName("a");
             String nextPageUrl = oneListTagA.get(0).getAttribute("href");
-            System.out.println("¸ÃÄ¦ÍĞ³µÁĞ±íµÄÁ´½ÓµØÖ·Îª£º " + nextPageUrl);
+            System.out.println("è¯¥æ‘©æ‰˜è½¦åˆ—è¡¨çš„é“¾æ¥åœ°å€ä¸ºï¼š " + nextPageUrl);
 
             String imgUrl = oneListTagA.get(0).getHtmlElementsByTagName("img").get(0).getAttribute("lazy_src");
-            System.out.println("¸ÃÄ¦ÍĞ³µÁĞ±íÍ¼Æ¬Á´½ÓÎª£º" + imgUrl);
+            System.out.println("è¯¥æ‘©æ‰˜è½¦åˆ—è¡¨å›¾ç‰‡é“¾æ¥ä¸ºï¼š" + imgUrl);
 
-            oneListTagA.get(0).click();//µã»÷µÚÒ»¸öÁĞ±íµÄ³¬Á´½Ó
-            HtmlPage detailPage = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
-//            System.out.println(detailPage.asText());
-            List<HtmlElement> tagSpanClass = detailPage.getElementById("header").getElementsByTagName("span");
-            String tagSpanName = tagSpanClass.get(1).asText();
-            System.out.println(tagSpanName);
+//            oneListTagA.get(0).click();//ç‚¹å‡»ç¬¬ä¸€ä¸ªåˆ—è¡¨çš„è¶…é“¾æ¥
+//            HtmlPage detailPage = (HtmlPage) webClient.getCurrentWindow().getEnclosedPage();
+////            System.out.println(detailPage.asText());
+//            List<HtmlElement> tagSpanClass = detailPage.getElementById("header").getElementsByTagName("span");
+//            String tagSpanName = tagSpanClass.get(1).asText();
+//            System.out.println(tagSpanName);
 
 
 //            System.out.println(classPage.asText());

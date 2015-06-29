@@ -172,8 +172,10 @@ public class crawlDoubanTongcheng {
 
             statemenet.executeBatch();
             conn.commit();//提交事务
+            insert_topicData(doubanTongchengList[0]);
             System.out.println("....插入数据成功!");
             conn.setAutoCommit(true);
+
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -191,12 +193,48 @@ public class crawlDoubanTongcheng {
 
     }
 
+    public static boolean insert_topicData(String doubanId) throws SQLException {
 
-    /**
-     * 将图片保存为二进制文件
-     * @param http
-     * @return
-     */
+//        System.out.println("*****开始连接数据库....\n");
+
+        Connection conn = getConn();
+        //conn.setAutoCommit(false);
+
+//        System.out.println("*****连接数据库成功....\n");
+        conn.setAutoCommit(false);
+        try {
+
+            // 提交product的batch  ,5是起始时间
+            String pro_query = "INSERT INTO topic_show VALUES (" + doubanId + ", " + 0 + ", " + 7 + ")";
+            PreparedStatement statemenet = conn.prepareStatement(pro_query);
+            statemenet.addBatch();
+
+            statemenet.executeBatch();
+            conn.commit();//提交事务
+            System.out.println("....插入Topic数据成功!");
+            conn.setAutoCommit(true);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            //取消事务
+            try {
+                conn.rollback();
+            } catch (SQLException ee) {
+                ee.printStackTrace();
+            }
+        } finally {
+            conn.close();
+        }
+
+        return true;
+    }
+
+
+        /**
+         * 将图片保存为二进制文件
+         * @param http
+         * @return
+         */
     public static byte[] GetImgFromHttp(String http) {
         byte[] buffer = null;
         try {

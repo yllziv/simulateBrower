@@ -1,6 +1,8 @@
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -21,6 +23,7 @@ import java.net.ProtocolException;
 import com.gargoylesoftware.htmlunit.html.*;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
+import org.apache.xerces.util.SynchronizedSymbolTable;
 
 
 /***************************************
@@ -86,9 +89,12 @@ public class crawlDoubanTongcheng {
      *                  时间 doubanActivityTime                   douban_activity_time
      *                  地点 doubanActivityPos                    douban_activity_pos
      *                  参加人数 doubanActivityJoinMan            douban_activity_joinman
+     *                  网站类别 webType                          web_type
      *                  感兴趣人数 doubanActivityInterestMan      douban_activity_interestman
      *                  类别 doubanActivityClass                  douban_activity_class
      *                  图片二进制形式 doubanActivityImgBuffer    douban_activity_imgbuffer(bytea类型)
+     *                  起始时间 doubanStartTime                  douban_start_time(time without time zone)
+     *                  终止时间 doubanEndTime                    douban_end_time(time without time zone)
      *                                                            id (serial类型——自增长)
      */
     public static void getCurrentPageContent(HtmlPage classPage, int className) throws SQLException {
@@ -100,13 +106,20 @@ public class crawlDoubanTongcheng {
             String doubanActivityID = getNumberFromString(doubanActivityURL);
             String doubanActivityImg = allList.get(i).getElementsByTagName("img").get(0).getAttribute("src");
             String doubanActivityTime = getPosTime(allList.get(i).getElementsByTagName("li").get(0).asText(), "时间： ");
+
+            Date doubanStartTime = getDateArray(doubanActivityTime).get(0);
+            Date doubanEndTime = getDateArray(doubanActivityTime).get(1);
+
             String doubanActivityPos = getPosTime(allList.get(i).getElementsByTagName("li").get(1).asText(), "地点： ");
             String doubanActivityJoinMan = getNumberFromString(allList.get(i).getElementsByAttribute("p", "class", "counts").get(0).getElementsByTagName("span").get(0).asText());
+            String webType = "7";
             String doubanActivityInterestMan = getNumberFromString(allList.get(i).getElementsByAttribute("p", "class", "counts").get(0).getElementsByTagName("span").get(2).asText());
             String doubanActivityClass = Integer.toString(className);
             byte[] doubanActivityImgBuffer = GetImgFromHttp(doubanActivityImg);
-            String[] doubanTongchengActivity = {doubanActivityID, doubanActivityTitle, doubanActivityURL, doubanActivityImg, doubanActivityTime, doubanActivityPos, doubanActivityJoinMan, doubanActivityInterestMan, doubanActivityClass};
-            insert_mainData(doubanTongchengActivity,doubanActivityImgBuffer);
+            String[] doubanTongchengActivity = {doubanActivityID, doubanActivityTitle, doubanActivityURL, doubanActivityImg, doubanActivityTime, doubanActivityPos, doubanActivityJoinMan,webType, doubanActivityInterestMan, doubanActivityClass};
+//            System.out.println(doubanStartTime);
+
+            insert_mainData(doubanTongchengActivity,doubanActivityImgBuffer,doubanStartTime,doubanEndTime);
         }
     }
 
@@ -135,7 +148,7 @@ public class crawlDoubanTongcheng {
      *
      * @param
      */
-    public static boolean insert_mainData(String[] doubanTongchengList,byte[] doubanActivityImgBuffer) throws SQLException {
+    public static boolean insert_mainData(String[] doubanTongchengList,byte[] doubanActivityImgBuffer,Date doubanStartTime,Date doubanEndTime) throws SQLException {
 
 //        System.out.println("*****开始连接数据库....\n");
 
@@ -146,14 +159,16 @@ public class crawlDoubanTongcheng {
         conn.setAutoCommit(false);
         try {
 
-            // 提交product的batch
-            String pro_query = "INSERT INTO douban_activity VALUES ('" + doubanTongchengList[0] + "', '" + doubanTongchengList[1] + "', '" + doubanTongchengList[2] +
-                    "','" + doubanTongchengList[3] + "', '" + doubanTongchengList[4] +
-                    "', '" + doubanTongchengList[5] + "'," + doubanTongchengList[6] + "," + doubanTongchengList[7] + ", " + doubanTongchengList[8] + ", ?)";
+            // 提交product的batch  ,5是起始时间
+            String pro_query = "INSERT INTO info_show VALUES ('" + doubanTongchengList[0] + "', '" + doubanTongchengList[1] + "', '" + doubanTongchengList[2] +
+                    "','" + doubanTongchengList[3] + "', '"+ doubanTongchengList[4] +
+                    "', '" + doubanTongchengList[5] + "'," + doubanTongchengList[6] + ","+ doubanTongchengList[7] + "," + doubanTongchengList[8] + ", " + doubanTongchengList[9] + ", ?,?,?)";
             PreparedStatement statemenet = conn.prepareStatement(pro_query);
             statemenet.setBytes(1,doubanActivityImgBuffer);
-            statemenet.addBatch();
+            statemenet.setTimestamp(2, new java.sql.Timestamp(doubanStartTime.getTime()));
+            statemenet.setTimestamp(3, new java.sql.Timestamp(doubanEndTime.getTime()));
 
+            statemenet.addBatch();
 
             statemenet.executeBatch();
             conn.commit();//提交事务
@@ -175,6 +190,7 @@ public class crawlDoubanTongcheng {
         return true;
 
     }
+
 
     /**
      * 将图片保存为二进制文件
@@ -237,6 +253,75 @@ public class crawlDoubanTongcheng {
         Pattern p = Pattern.compile(regEx);
         Matcher m = p.matcher(row);
         return m.replaceAll("").trim();
+    }
+
+    /**
+     * 得到起始时间和终止时间
+     * @param test
+     * @return
+     */
+    public static ArrayList<Date> getDateArray(String test) {
+        Date startTime = new Date();
+        Date endTime = new Date();
+        if(test.indexOf("~") == -1){//没有终止时间
+            startTime = getDate(test);
+        }else {// 有终止时间
+            startTime = getDate(test);
+            endTime   = getDate(test.substring(test.indexOf("~")+1,test.length()));
+        }
+        ArrayList<Date> dateArray = new ArrayList<Date>();
+        dateArray.add(startTime);
+        dateArray.add(endTime);
+        return dateArray;
+    }
+
+    public static Date getDate(String myTest) {
+
+        Date date = new Date();
+        try {
+            String yearString = "2015";
+            String monthString = "";
+            String dayString = "";
+            myTest = new String(myTest.getBytes("GBK"));
+
+
+            Pattern pMonth = Pattern.compile("(\\d*)(?=月)");
+            Matcher mMonth = pMonth.matcher(myTest);
+            if (mMonth.find()) {
+                monthString = mMonth.group();
+            }
+
+            Pattern pDay = Pattern.compile("(?<=月)(\\d*)(?=日)");
+            Matcher mDay = pDay.matcher(myTest);
+            if (mDay.find()) {
+                dayString = mDay.group();
+            }
+
+            GregorianCalendar gc = new GregorianCalendar();
+            if (yearString.length() > 0 && monthString.length() > 0 && dayString.length() > 0) {
+                gc.set(Calendar.YEAR, Integer.parseInt(yearString));//设置年
+                gc.set(Calendar.MONTH, Integer.parseInt(monthString) - 1);//这里0是1月..以此向后推
+                gc.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dayString));//设置天
+                date = gc.getTime();
+//                System.out.println(new SimpleDateFormat("yyyy-MM-dd").format(date));
+//                return (new SimpleDateFormat("yyyy-MM-dd").format(date));
+            } else if (yearString.length() > 0 && monthString.length() > 0) {
+
+                gc.set(Calendar.YEAR, Integer.parseInt(yearString));//设置年
+                gc.set(Calendar.MONTH, Integer.parseInt(monthString) - 1);//这里0是1月..以此向后推
+                date = gc.getTime();
+//                return (new SimpleDateFormat("yyyy-MM").format(date));
+            } else if (yearString.length() > 0) {
+                gc.set(Calendar.YEAR, Integer.parseInt(yearString));//设置年
+                date = gc.getTime();
+//                return (new SimpleDateFormat("yyyy").format(date));
+
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        return date;
     }
 
 }

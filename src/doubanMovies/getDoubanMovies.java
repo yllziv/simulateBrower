@@ -53,7 +53,7 @@ public class getDoubanMovies {
      *****************************************/
     public static void crawlUserName(){
         //循环年份
-        for (int i = 1936; i < 1937; i++) {
+        for (int i = 2015; i < 2016; i++) {
             try {
                 System.out.println("");
                 System.out.println("start " + String.valueOf(i));
@@ -62,7 +62,7 @@ public class getDoubanMovies {
                 webClient.getCurrentWindow().setInnerHeight(60000);
 
                 //循环该年份标签的页数：
-                for(int k = 0; k < 1000000; k++){
+                for(int k = 107; k < 178; k++){
                     System.out.print(String.valueOf(k) + " ");
                     HtmlPage classPage = (HtmlPage) webClient.getPage("http://www.douban.com/tag/"+String.valueOf(i)+"/movie?start="+String.valueOf(k*15));
                     HtmlElement classDiv = (HtmlElement) classPage.getHtmlElementById("content");
@@ -74,8 +74,8 @@ public class getDoubanMovies {
                         //循环当前页面的电影
                         for(int j = 0; j < currentListNumber; j++){
                             passURLGetMovieInfo(classDiv.getElementsByTagName("dl").get(j).getElementsByTagName("a").get(0).getAttribute("href"),i);
-                            Thread.sleep(2000); //等待 5s
-//                            passURLGetMovieInfo("http://movie.douban.com/subject/10544340/?from=tag_all");
+                            Thread.sleep(1000); //等待 1s
+//                            passURLGetMovieInfo("http://movie.douban.com/subject/2156663/?from=tag_all",i);
                         }
                     }
                 }
@@ -124,12 +124,13 @@ public class getDoubanMovies {
 //        System.out.println(movieURL);
         try {
             WebClient webClient = new WebClient(BrowserVersion.CHROME);
-            webClient.getOptions().setJavaScriptEnabled(false);
+            webClient.getOptions().setJavaScriptEnabled(true);
             webClient.getCurrentWindow().setInnerHeight(60000);
             HtmlPage moviePage = (HtmlPage) webClient.getPage(movieURL);
+//            Thread.sleep(1000); //等待 1s
             getMovieDetailInfo(moviePage,movieURL,year);
 
-            webClient.close();
+            webClient.closeAllWindows();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -215,14 +216,25 @@ public class getDoubanMovies {
         String doubanMovieShortComment = getNumberFromString(moviePage.getHtmlElementById("comments-section").getElementsByAttribute("span", "class", "pl").get(0).asText());
 
         //电影问题数量 doubanMovieQuestionComment
-        String doubanMovieQuestionComment = getNumberFromString(moviePage.getHtmlElementById("askmatrix").getElementsByAttribute("span","class","pl").get(0).asText());
+        String doubanMovieQuestionComment = "";
+        if(infoDiv.asText().indexOf("的问题") != -1){
+            doubanMovieQuestionComment = getNumberFromString(moviePage.getHtmlElementById("askmatrix").getElementsByAttribute("span","class","pl").get(0).asText());
+
+        }else {
+            doubanMovieQuestionComment = "NULL";
+        }
 
         //电影长评数量 doubanMovieLongComment
         String doubanMovieLongComment = getNumberFromString(moviePage.getHtmlElementById("review_section").getElementsByAttribute("span","class","pl").get(0).asText());
 
 
         //电影讨论数量 doubanMovieTalkNum
-        String doubanMovieTalkNum = getNumberFromString(moviePage.getHtmlElementById("content").getElementsByAttribute("h2","class","discussion_link").get(0).asText());
+        String doubanMovieTalkNum = "";
+        if(infoDiv.asText().indexOf("去这部影片的讨论区") != -1){
+            doubanMovieTalkNum = getNumberFromString(moviePage.getHtmlElementById("content").getElementsByAttribute("h2","class","discussion_link").get(0).asText());
+        }else {
+            doubanMovieTalkNum = "NULL";
+        }
 
         //看过人数    doubanMovieLookedMan
         String doubanMovieLookedMan = "";

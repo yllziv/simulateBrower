@@ -130,7 +130,7 @@ public class crawlDoubanTongcheng {
         Connection conn = null;
         try {
             Class.forName("org.postgresql.Driver");
-            String url = "jdbc:postgresql://localhost:5432/crawler";
+            String url = "jdbc:postgresql://202.114.114.34:5432/crawler";
             try {
                 conn = DriverManager.getConnection(url, "postgres", "admin");
             } catch (SQLException e) {
@@ -160,7 +160,7 @@ public class crawlDoubanTongcheng {
         try {
 
             // 提交product的batch  ,5是起始时间
-            String pro_query = "INSERT INTO info_show VALUES ('" + doubanTongchengList[0] + "', '" + doubanTongchengList[1] + "', '" + doubanTongchengList[2] +
+            String pro_query = "INSERT INTO info_show VALUES (" + doubanTongchengList[0] + ", '" + doubanTongchengList[1] + "', '" + doubanTongchengList[2] +
                     "','" + doubanTongchengList[3] + "', '"+ doubanTongchengList[4] +
                     "', '" + doubanTongchengList[5] + "'," + doubanTongchengList[6] + ","+ doubanTongchengList[7] + "," + doubanTongchengList[8] + ", " + doubanTongchengList[9] + ", ?,?,?)";
             PreparedStatement statemenet = conn.prepareStatement(pro_query);
